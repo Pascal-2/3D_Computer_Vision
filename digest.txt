@@ -1,0 +1,1722 @@
+Directory structure:
+└── Framework/
+    ├── Axes.cpp
+    ├── Axes.h
+    ├── Cube.cpp
+    ├── Cube.h
+    ├── GLConvenience.cpp
+    ├── GLConvenience.h
+    ├── Hexahedron.cpp
+    ├── Hexahedron.h
+    ├── PerspectiveCamera.cpp
+    ├── PerspectiveCamera.h
+    ├── Plane.cpp
+    ├── Plane.h
+    ├── PointCloud.cpp
+    ├── PointCloud.h
+    ├── QtConvenience.cpp
+    ├── QtConvenience.h
+    ├── RenderCamera.cpp
+    ├── RenderCamera.h
+    ├── SceneManager.cpp
+    ├── SceneManager.h
+    ├── SceneObject.cpp
+    ├── SceneObject.h
+    ├── glwidget.cpp
+    ├── glwidget.h
+    ├── main.cpp
+    ├── mainwindow.cpp
+    └── mainwindow.h
+
+================================================
+File: Axes.cpp
+================================================
+//
+//  A class to render coordinate systems
+//
+//  ATTENTION: This class is in this form only meant for rendering purposes!
+//
+// (c) Georg Umlauf, 2021
+//
+#include "Axes.h"
+
+Axes::Axes(const QVector4D&  _origin,
+           const QMatrix4x4& _rotation)
+    : rotation(_rotation),
+      origin  (_origin)
+{
+    type = SceneObjectType::ST_AXES;
+    axes.push_back(QVector3D(origin));
+    axes.push_back(QVector3D(origin + rotation.column(0)));
+    axes.push_back(QVector3D(origin));
+    axes.push_back(QVector3D(origin + rotation.column(1)));
+    axes.push_back(QVector3D(origin));
+    axes.push_back(QVector3D(origin + rotation.column(2)));
+}
+
+void Axes::affineMap(const QMatrix4x4& M)
+{
+    QMatrix4x4 T = M; T.setColumn(3,E0);
+    origin       = M * origin;
+    rotation     = T * rotation;
+    axes.clear();
+    axes.push_back(QVector3D(origin));
+    axes.push_back(QVector3D(origin + rotation.column(0)));
+    axes.push_back(QVector3D(origin));
+    axes.push_back(QVector3D(origin + rotation.column(1)));
+    axes.push_back(QVector3D(origin));
+    axes.push_back(QVector3D(origin + rotation.column(2)));
+}
+
+void Axes::draw(const RenderCamera& renderer, const QColor& color, float lineWidth) const
+{
+    QColor c = color;
+    c.toHsv();
+    renderer.renderLine(axes[0],axes[1],c,lineWidth);
+
+    c.setHsv(c.hue()+120, c.saturation(), c.value());
+    renderer.renderLine(axes[2],axes[3],c,lineWidth);
+
+    c.setHsv(c.hue()+120, c.saturation(), c.value());
+    renderer.renderLine(axes[4],axes[5],c,lineWidth);
+}
+
+//hinzugefuegt
+
+QVector4D Axes::getOrigin() {
+    return origin;
+}
+QVector3D Axes::getZ() {
+    return axes[2];
+}
+
+
+
+================================================
+File: Axes.h
+================================================
+//
+//  A class to render coordinate systems
+//
+//  ATTENTION: This class is only meant for rendering purposes!
+//
+// (c) Georg Umlauf, 2021
+//
+#pragma once
+
+#include "SceneObject.h"
+
+#include <QMatrix4x4>
+
+[[maybe_unused]] const QVector4D E0 = QVector4D(0,0,0,1);    // world origin    in homogeneous coordinates
+[[maybe_unused]] const QVector4D E1 = QVector4D(1,0,0,0);    // 1st unit vector in homogeneous coordinates
+[[maybe_unused]] const QVector4D E2 = QVector4D(0,1,0,0);    // 2nd unit vector in homogeneous coordinates
+[[maybe_unused]] const QVector4D E3 = QVector4D(0,0,1,0);    // 3rd unit vector in homogeneous coordinates
+[[maybe_unused]] const QVector3D e1 = QVector3D(1,0,0);      // 1st unit vector in affine      coordinates
+[[maybe_unused]] const QVector3D e2 = QVector3D(0,1,0);      // 2nd unit vector in affine      coordinates
+[[maybe_unused]] const QVector3D e3 = QVector3D(0,0,1);      // 3rd unit vector in affine      coordinates
+
+class Axes: public SceneObject
+{
+private:
+    std::vector<QVector3D> axes;
+    QMatrix4x4             rotation;
+    QVector4D              origin;
+
+public:
+    Axes(const QVector4D&  origin   = E0,
+         const QMatrix4x4& rotation = QMatrix4x4());
+    virtual ~Axes() override {}
+
+    virtual void affineMap(const QMatrix4x4  & matrix) override;
+    virtual void draw     (const RenderCamera& renderer,
+                           const QColor      & color     = COLOR_AXES,
+                           float               lineWidth = 3.0f      ) const override;
+
+    //hinzugefuegt
+    QVector4D getOrigin();
+    QVector3D getZ();
+};
+
+
+
+
+================================================
+File: Cube.cpp
+================================================
+//
+//  A class specializing hexahedra to cubes, i.e. eqilateral hexahedra
+//
+// (c) Georg Umlauf, 2021
+//
+#include "Cube.h"
+
+#include "GLConvenience.h"
+#include "Axes.h"
+
+Cube::Cube(QVector4D _origin, float _sideLength):
+    Hexahedron(_origin,_sideLength,_sideLength,_sideLength)
+{
+    type = SceneObjectType::ST_CUBE;
+}
+
+Cube::Cube (const Cube& c): Hexahedron(c)
+{
+    type = SceneObjectType::ST_CUBE;
+}
+
+
+
+================================================
+File: Cube.h
+================================================
+//
+//  A class specializing hexahedra to cubes, i.e. eqilateral hexahedra
+//
+// (c) Georg Umlauf, 2021
+//
+#pragma once
+
+#include "Hexahedron.h"
+#include <QVector4D>
+
+class Cube: public Hexahedron
+{
+private:
+
+public:
+    Cube (QVector4D _origin=E1+E0, float _sideLength=1.0);      // specialized constructor
+    Cube (const Cube& c);                                       // copy-constructor
+    virtual ~Cube() override {}                                 // destructor has nothing to do
+};
+
+
+
+
+
+================================================
+File: GLConvenience.cpp
+================================================
+//
+//  Some convenience functions for OpenGL-/Qt-conversions
+//
+// (c) Georg Umlauf, 2021
+//
+#include "GLConvenience.h"
+
+void glVertex3f(const QVector3D& vector)
+{
+    glVertex3f(vector.x(),vector.y(),vector.z());
+}
+
+void glVertex3f(const QVector4D& vector)
+{
+    glVertex3f(vector.x(),vector.y(),vector.z());
+}
+
+void glColor3f (const QColor& color)
+{
+    glColor3f (float(color.red  ())/255.0f,
+               float(color.green())/255.0f,
+               float(color.blue ())/255.0f  );
+}
+
+void glColor4f (const QColor& color)
+{
+    glColor4f (float(color.red  ())/255.0f,
+               float(color.green())/255.0f,
+               float(color.blue ())/255.0f,
+               float(color.alpha())/255.0f);
+}
+
+void glColor4f (const QColor& color, float transpareny)
+{
+    glColor4f (float(color.red  ())/255.0f,
+               float(color.green())/255.0f,
+               float(color.blue ())/255.0f,
+               transpareny);
+}
+
+
+
+================================================
+File: GLConvenience.h
+================================================
+//
+//  Some convenience functions for OpenGL-/Qt-conversions
+//
+// (c) Georg Umlauf, 2021
+//
+#pragma once
+
+#include <QtGui>
+#include <QVector3D>
+#include <QVector4D>
+#include <QColor>
+
+void glVertex3f(const QVector3D& vector);
+void glVertex3f(const QVector4D& vector);
+void glColor3f (const QColor   & color);
+void glColor4f (const QColor   & color);
+void glColor4f (const QColor   & color, float transparency);
+
+
+
+
+================================================
+File: Hexahedron.cpp
+================================================
+//
+//  A simple class for hexahedral objects
+//
+// (c) Georg Umlauf, 2021
+//
+#include "Hexahedron.h"
+#include "QtConvenience.h"
+#include <iostream>
+
+Hexahedron::Hexahedron(QVector4D _origin,
+                       float     _dx,
+                       float     _dy,
+                       float     _dz):
+    origin(_origin), dx(_dx), dy(_dy), dz(_dz)
+{
+    type = SceneObjectType::ST_HEXAHEDRON;
+
+    QVector3D o(origin.x(),origin.y(), origin.z());
+    this->push_back(o);
+    this->push_back(o+QVector3D( 0,dy, 0));
+    this->push_back(o+QVector3D( 0,dy,dz));
+    this->push_back(o+QVector3D( 0, 0,dz));
+    this->push_back(o+QVector3D(dx, 0, 0));
+    this->push_back(o+QVector3D(dx,dy, 0));
+    this->push_back(o+QVector3D(dx,dy,dz));
+    this->push_back(o+QVector3D(dx, 0,dz));
+}
+
+Hexahedron::Hexahedron(const Hexahedron& hex):
+    SceneObject(hex),
+    std::vector<QVector3D>(hex)
+{
+    origin = hex.origin;
+    dx     = hex.dx;
+    dy     = hex.dy;
+    dz     = hex.dz;
+    type   = SceneObjectType::ST_HEXAHEDRON;
+}
+
+Hexahedron::Hexahedron(const Hexahedron&& hex):
+    SceneObject(hex),
+    std::vector<QVector3D>(hex)
+{
+    origin = hex.origin;
+    dx     = hex.dx;
+    dy     = hex.dy;
+    dz     = hex.dz;
+    type   = SceneObjectType::ST_HEXAHEDRON;
+}
+
+void Hexahedron::affineMap(const QMatrix4x4& M)
+{
+    origin = M*origin;
+    for (auto& p: *this) p = M^p;
+}
+
+void Hexahedron::draw(const RenderCamera& renderer,
+                      const QColor& color,
+                      float lineWidth) const
+{
+    for (unsigned i=0; i<2*edgeCount; i+=2)
+        renderer.renderLine(
+            (*this)[edgeList[i  ]],
+            (*this)[edgeList[i+1]],
+            color,
+            lineWidth);
+    std::cout << "ja, ich, draw von Hexahedron, werde aufgerufen.";
+}
+
+void Hexahedron::drawPoints(const RenderCamera& renderer,
+                            const QColor& col,
+                            float pointSize) const
+{
+    for (auto p: *this) renderer.renderPoint(p,col,pointSize);
+}
+
+QDebug& operator << (QDebug& dbg, const Hexahedron &hex)
+{
+    dbg.nospace() << "Hexahedron:";
+    for (auto p: hex) dbg.nospace() << p;
+    dbg.nospace() << "\n";
+    return dbg.space();
+}
+
+
+
+================================================
+File: Hexahedron.h
+================================================
+//
+//  A simple class for hexahedral objects
+//
+// (c) Georg Umlauf, 2021
+//
+#pragma once
+
+#include "SceneObject.h"
+#include "Axes.h"
+
+class Hexahedron :
+    public SceneObject,                         // scene object properties
+    public std::vector<QVector3D>               // list of corners, in affine coordinates
+{
+protected:
+    QVector4D origin;                           // origin, controls the distance to the cameras, i.e. typically it's the bottom-left-front corner
+    float dx, dy, dz;                           // dy = width, dy = height, dz = thickness/depth
+
+public:
+    Hexahedron(QVector4D _ori = E0+E1,          // origin in homogeneous coordinates, i.e. typically it's the bottom-left-front corner
+               float     _dx  = 1.0,            // width
+               float     _dy  = 1.0,            // height
+               float     _dz  = 1.0);           // depth/thickness
+    Hexahedron(const Hexahedron&  hex);         // copy constructor
+    Hexahedron(const Hexahedron&& hex);         // move constructor
+    virtual ~Hexahedron() override {}           // destructor has nothing to do
+
+    // apply affine map to the corners of the hexahedron
+    virtual void affineMap (const QMatrix4x4  & matrix) override;
+    // draws the wireframe of the hexahedron
+    virtual void draw      (const RenderCamera& renderer,
+                            const QColor      & color     = COLOR_SCENE,
+                            float               lineWidth = 3.0f       ) const override;
+    // draws the corners of the hexahedron
+            void drawPoints(const RenderCamera& renderer,
+                            const QColor      & color     = COLOR_SCENE,
+                            float               pointSize = 1) const;
+
+protected:
+    // Some convenience members to iterate a hexahedron's vertices and edges
+    constexpr static unsigned edgeCount = 12;
+    constexpr static unsigned faceCount = 6;
+    constexpr static unsigned edgeList[2*edgeCount] = {0,1,0,3, 1,2,2,3, 4,5,4,7, 5,6,6,7, 0,4,1,5, 2,6,3,7};
+    constexpr static unsigned faceList[4*faceCount] = {0,1,2,3, 0,3,7,4, 0,4,5,1, 6,5,4,7, 6,7,3,2, 6,2,1,5};
+};
+
+QDebug& operator << (QDebug& dbg, const Hexahedron &hex);
+
+
+
+================================================
+File: PerspectiveCamera.cpp
+================================================
+#include "PerspectiveCamera.h"
+#include <iostream>
+
+
+
+PerspectiveCamera::PerspectiveCamera(Axes axes, float f): axes(axes), f(f) {
+    // z achsenvektor normieren
+    // N + f * normierter Vektor = H
+    // Normalenvektor von imagePlane = normierter Vektor
+    QVector3D z = axes.getZ();
+    z.normalize();
+    QVector4D z4D = QVector4D(z);
+    QVector4D o4D = axes.getOrigin();
+    QVector3D o3D = QVector3D(o4D);
+    QVector3D h3D = o3D + f * z;
+    QVector4D h4D = QVector4D(h3D);
+    imagePlane = Plane(h4D, z4D);
+}
+
+void PerspectiveCamera::draw (const RenderCamera& renderer, const QColor&, float) const {
+    imagePlane.draw(renderer, QColor(QColorConstants::Red), 0.2);
+    axes.draw(renderer, QColor(QColorConstants::Red));
+    std::cout << "ja, ich werde aufgerufen.";
+}
+
+void PerspectiveCamera::affineMap(const QMatrix4x4& M)
+{
+    imagePlane.affineMap(M);
+    axes.affineMap(M);
+}
+
+
+
+================================================
+File: PerspectiveCamera.h
+================================================
+//#ifndef PERSPECTIVECAMERA_H
+//#define PERSPECTIVECAMERA_H
+
+#pragma once
+
+#include "Axes.h"
+#include "Plane.h"
+#include "SceneObject.h"
+
+class PerspectiveCamera: public SceneObject
+{
+public:
+    PerspectiveCamera(Axes axis, float f);
+    virtual void draw (const RenderCamera& renderer, const QColor&, float) const override;
+    virtual ~PerspectiveCamera() override {}
+    virtual void affineMap(const QMatrix4x4  & matrix) override;
+    PerspectiveCamera& operator=(const PerspectiveCamera& pc);
+private:
+    Axes axes;
+    float f;
+    Plane imagePlane;
+};
+
+
+//#endif // PERSPECTIVECAMERA_H
+
+
+
+================================================
+File: Plane.cpp
+================================================
+//
+// (c) Georg Umlauf, 2021
+//
+#include "Plane.h"
+#include "GLConvenience.h"
+#include "QtConvenience.h"
+
+Plane::Plane(const QVector4D& _origin, const QVector4D& _normal):
+    origin(_origin),
+    normal(_normal)
+{
+    type = SceneObjectType::ST_PLANE;
+    normal.normalize();
+}
+
+
+void Plane::affineMap(const QMatrix4x4& M)
+{
+    origin = M*origin;
+    normal = M*normal;
+    normal.normalize();
+}
+
+Plane& Plane::operator=(const Plane& p) {
+    if (this!=&p) {
+        origin = p.origin;
+        normal = p.normal;
+    }
+    return *this;
+}
+
+void Plane::draw(const RenderCamera& renderer,const QColor& color,float transparency ) const
+{
+    QVector3D n(normal);
+    QVector3D o(origin);
+    QVector3D y = QVector3D::crossProduct(e1,n);
+    if (y.length()< 0.001f) y = QVector3D::crossProduct(e2,n);
+    QVector3D x = QVector3D::crossProduct(-y,n);
+    x.normalize();
+    y.normalize();
+
+    renderer.renderLine(o,o+0.3f*n,color);
+
+    std::vector<QVector2D> bb;
+    bb.push_back(QVector2D(-1,-1));
+    bb.push_back(QVector2D( 1, 1));
+    renderer.renderPlane(o+bb[0][0]*x+bb[0][1]*y,
+                         o+bb[0][0]*x+bb[1][1]*y,
+                         o+bb[1][0]*x+bb[1][1]*y,
+                         o+bb[1][0]*x+bb[0][1]*y,
+                         color,transparency);
+}
+
+
+
+================================================
+File: Plane.h
+================================================
+//
+// (c) Georg Umlauf, 2021
+//
+#pragma once
+
+#include "SceneObject.h"
+#include "Axes.h"
+
+class Plane : public SceneObject
+{
+private:
+    QVector4D origin, normal;
+
+public:
+    Plane (const QVector4D& _origin=E1+E0,
+           const QVector4D& _normal=E1);
+    virtual ~Plane() override {}
+
+    virtual void affineMap(const QMatrix4x4  & matrix) override;
+    virtual void draw     (const RenderCamera& renderer,
+                           const QColor      & color        = COLOR_PLANE,
+                           float               transparency = 0.2f       ) const override;
+
+    Plane& operator=(const Plane& p);
+};
+
+
+
+================================================
+File: PointCloud.cpp
+================================================
+//
+// (c) Georg Umlauf, 2022
+//
+#include "PointCloud.h"
+
+#include <fstream>
+#include <sstream>
+#include <iostream>
+#include <math.h>
+
+#include "GLConvenience.h"
+#include "QtConvenience.h"
+
+using namespace std;
+
+PointCloud::PointCloud()
+{
+    type      = SceneObjectType::ST_POINT_CLOUD;
+    pointSize = 3.0f;
+}
+
+PointCloud::~PointCloud()
+{}
+
+bool PointCloud::loadPLY(const QString& filePath)
+{
+    // open stream
+    fstream is;
+    is.open(filePath.toStdString().c_str(), fstream::in);
+
+    // ensure format with magic header
+    string line;
+    getline(is, line);
+    if (line != "ply") throw runtime_error("not a ply file");
+
+    // parse header looking only for 'element vertex' section size
+    unsigned pointsCount = 0;
+    while (is.good()) {
+        getline(is, line);
+        if (line == "end_header") {
+            break;
+        } else {
+            stringstream ss(line);
+            string tag1, tag2, tag3;
+            ss >> tag1 >> tag2 >> tag3;
+            if (tag1 == "element" && tag2 == "vertex") {
+                pointsCount = unsigned(atoi(tag3.c_str()));
+            }
+        }
+    }
+
+    // read and parse 'element vertex' section
+    if (pointsCount > 0) {
+        this->resize(pointsCount);
+        float m = float(INT_MAX);
+        pointsBoundMin = QVector3D(m,m,m);
+        pointsBoundMax = -pointsBoundMin;
+
+        stringstream ss;
+        string line;
+        QVector4D *p = this->data();
+        for (size_t i = 0; is.good() && i < pointsCount; ++i) {
+            getline(is, line);
+            ss.str(line);
+            float x, y, z;
+            ss >> x >> y >> z;
+
+            *p++ = QVector4D(x, y, z, 1.0);
+
+            // updates for AABB
+            pointsBoundMax[0] = max(x, pointsBoundMax[0]);
+            pointsBoundMax[1] = max(y, pointsBoundMax[1]);
+            pointsBoundMax[2] = max(z, pointsBoundMax[2]);
+            pointsBoundMin[0] = min(x, pointsBoundMin[0]);
+            pointsBoundMin[1] = min(y, pointsBoundMin[1]);
+            pointsBoundMin[2] = min(z, pointsBoundMin[2]);
+        }
+
+        // basic validation
+        if (p - this->data() < size()) throw runtime_error("broken ply file");
+
+        cout << "number of points: " + to_string(pointsCount) << endl;
+
+        // rescale data
+        float a,s=0;
+        for (int i=0; i<3;i++) {
+            a = pointsBoundMax[i]-pointsBoundMin[i];
+            s+= a*a;
+        }
+        s = sqrt(s)/pointCloudScale;
+        for (auto& p: *this) { p /= s; p[3]=1.0; }
+      //  for (int i=0; i < size(); i++) { (*this)[i]/=s; (*this)[i][3] = 1.0; }
+    }
+    return true;
+}
+
+void PointCloud::setPointSize(unsigned _pointSize)
+{
+    pointSize = _pointSize;
+}
+
+void PointCloud::affineMap(const QMatrix4x4& M)
+{
+    for (auto& p: *this) p=M.map(p);
+}
+
+void PointCloud::draw(const RenderCamera& camera, const QColor& color, float ) const
+{
+    camera.renderPCL((*this),color,pointSize);
+}
+
+
+
+================================================
+File: PointCloud.h
+================================================
+//
+// (c) Georg Umlauf, 2022
+//
+#pragma once
+
+#include "SceneObject.h"
+#include "RenderCamera.h"
+
+class PointCloud: public SceneObject, public QVector<QVector4D>
+{
+private:
+    QVector3D    pointsBoundMin;
+    QVector3D    pointsBoundMax;
+
+    unsigned     pointSize       = 3;
+    const float  pointCloudScale = 1.5f;
+
+public:
+    PointCloud();
+    virtual ~PointCloud();
+
+    bool loadPLY(const QString&);
+
+    virtual void affineMap(const QMatrix4x4&) override;
+    virtual void draw     (const RenderCamera& camera,
+                           const QColor      & color      = COLOR_POINT_CLOUD,
+                           float               point_size = 3.0f) const override;
+    QVector3D getMin() const { return pointsBoundMin; }
+    QVector3D getMax() const { return pointsBoundMax; }
+
+    // setup point size
+    void     setPointSize(unsigned s);
+    unsigned getPointSize(          ) const { return pointSize; }
+};
+
+
+
+
+================================================
+File: QtConvenience.cpp
+================================================
+//
+//  Some convenience functions for unusual Qt-object operations
+//
+// (c) Georg Umlauf, 2022
+//
+#include "QtConvenience.h"
+
+QMatrix4x3 operator*(const QMatrix3x3& a, const QMatrix4x3& b)
+{
+    QMatrix4x3 t;
+
+    for (int i=0; i<3; i++)
+        for (int j=0; j<4; j++) {
+            t(i,j)=0;
+            for (int k=0; k<3; k++) t(i,j) += a(i,k)*b(k,j);
+        }
+    return t;
+}
+
+QVector3D operator*(const QMatrix4x3& a, const QVector4D& b)
+{
+    QVector3D t;
+
+    for (int i=0; i<3; i++) {
+        t[i]=0;
+        for (int j=0; j<4; j++) t[i] += a(i,j)*b[j];
+    }
+    return t;
+}
+
+QVector4D operator - (const QVector3D& a, const QVector4D& b)
+{
+    QVector4D t;
+
+    for (int i=0; i<3; i++) t[i] = a[i]-b[i];
+    t[3]= b[3];
+
+    return t;
+}
+
+QVector3D operator ^ (const QMatrix4x4 &a, const QVector3D& b)
+{
+    return a.map(b);
+}
+
+QVector3D operator ^ (const QMatrix4x4 &a, const QVector4D& b)
+{
+    return a^QVector3D(b);
+}
+
+
+QVector4D to4D(const QVector3D &a)
+{
+    return QVector4D(a[0],a[1],a[2],1);
+}
+
+
+
+================================================
+File: QtConvenience.h
+================================================
+//
+//  Some convenience functions for unusual Qt-object operations
+//
+// (c) Georg Umlauf, 2022
+//
+#pragma once
+
+#include <QVector3D>
+#include <QVector4D>
+#include <QMatrix4x4>
+#include <QColor>
+
+QMatrix4x3 operator * (const QMatrix3x3& a, const QMatrix4x3& b);   // (3x3)-(4x3)-matrix multiplication
+QVector3D  operator * (const QMatrix4x3& a, const QVector4D & b);   // matrix-vector-multiplication
+QVector4D  operator - (const QVector3D & a, const QVector4D & b);   // vector-vector-difference
+QVector3D  operator ^ (const QMatrix4x4& a, const QVector3D & b);   //
+QVector3D  operator ^ (const QMatrix4x4& a, const QVector4D & b);
+QVector4D  to4D       (const QVector3D & a);
+
+
+
+================================================
+File: RenderCamera.cpp
+================================================
+//
+// This is the camera for the rendering of the scene ONLY.
+//
+// (c) Georg Umlauf, 2021
+//
+#include "RenderCamera.h"
+#include "GLConvenience.h"
+#include "QtConvenience.h"
+
+RenderCamera::RenderCamera(QObject* parent) :
+    QObject(parent),
+    xRotation(0),
+    yRotation(0),
+    zRotation(0)
+{
+    projectionMatrix.setToIdentity();
+    cameraMatrix.    setToIdentity();
+    worldMatrix.     setToIdentity();
+    renderMatrix = getRenderMatrix();
+}
+
+void RenderCamera::setup()
+{
+    // position and angles
+    QMatrix4x4 cm;
+    cm.setToIdentity();
+    cm.translate(position.x(),position.y(),position.z());
+    cm.rotate   (xRotation, 1, 0, 0);
+    cm.rotate   (yRotation, 0, 1, 0);
+    cm.rotate   (zRotation, 0, 0, 1);
+    setCameraMatrix(cm);
+    // the world is still for now, thus nothing to do for renderCamera->setWorldMatrix
+}
+
+void RenderCamera::reset()
+{
+    xRotation=0;
+    yRotation=0;
+    zRotation=0;
+    setPosition(QVector3D(-0.05f, -0.0f, -0.1f));
+    rotate(0, 130, 30);
+    renderMatrix = getRenderMatrix();
+}
+
+void RenderCamera::forward()
+{
+    position[2] += TranslationSTEP;
+    emit changed();
+}
+
+
+void RenderCamera::backward()
+{
+    position[2] -= TranslationSTEP;
+    emit changed();
+}
+
+void RenderCamera::left()
+{
+    position[0] += TranslationSTEP;
+    emit changed();
+}
+
+void RenderCamera::right()
+{
+    position[0] -= TranslationSTEP;
+    emit changed();
+}
+
+void RenderCamera::up()
+{
+    position[1] -= TranslationSTEP;
+    emit changed();
+}
+
+void RenderCamera::down()
+{
+    position[1] += TranslationSTEP;
+    emit changed();
+}
+
+void RenderCamera::setPosition(const QVector3D& _position)
+{
+    position = _position;
+}
+
+void RenderCamera::setProjectionMatrix(const QMatrix4x4& P)
+{
+    projectionMatrix = P;
+    renderMatrix = getRenderMatrix();
+}
+
+void RenderCamera::setCameraMatrix(const QMatrix4x4& C)
+{
+    cameraMatrix = C;
+    renderMatrix = getRenderMatrix();
+}
+
+void RenderCamera::setWorldMatrix(const QMatrix4x4& W)
+{
+    worldMatrix = W;
+    renderMatrix = getRenderMatrix();
+}
+
+void RenderCamera::setXRotation(int angle)
+{
+    angle = angle % (RotationBASE * RotationSTEP);
+    if (angle != xRotation) {
+        xRotation = angle;
+        emit changed();
+    }
+}
+
+void RenderCamera::setYRotation(int angle)
+{
+    angle = angle % (RotationBASE * RotationSTEP);
+    if (angle != yRotation) {
+        yRotation = angle;
+        emit changed();
+    }
+}
+
+void RenderCamera::setZRotation(int angle)
+{
+    angle = angle % (RotationBASE * RotationSTEP);
+    if (angle != zRotation) {
+        zRotation = angle;
+        emit changed();
+    }
+}
+
+void RenderCamera::rotate(int dx, int dy, int dz)
+{
+    setXRotation(xRotation + dx);
+    setYRotation(yRotation + dy);
+    setZRotation(zRotation + dz);
+}
+
+QMatrix4x4 RenderCamera::getRenderMatrix() const
+{
+    QMatrix4x4 mvMatrix = cameraMatrix * worldMatrix;
+    mvMatrix.scale(0.05f); // make it small
+    mvMatrix = projectionMatrix * mvMatrix;
+
+    return mvMatrix;
+}
+
+QMatrix4x4 RenderCamera::getViewMatrix() const
+{
+    return projectionMatrix * cameraMatrix * worldMatrix;
+}
+
+void RenderCamera::renderPoint(const QVector3D& p,
+                               const QColor& color,
+                               float pointSize) const
+{
+    glPointSize(fmaxf(1.0f,pointSize));
+    glBegin(GL_POINTS);
+    glColor3f(color);
+    glVertex3f(renderMatrix ^ p);
+    glEnd();
+}
+
+void RenderCamera::renderPoint(const QVector4D& p,
+                               const QColor& color,
+                               float pointSize) const
+{
+    renderPoint(QVector3D(p[0],p[1],p[2]),color,pointSize);
+}
+
+void RenderCamera::renderLine (const QVector3D& a,
+                               const QVector3D& b,
+                               const QColor& color,
+                               float lineWidth) const
+{
+    glLineWidth(fmaxf(1.0f,lineWidth));
+    glBegin(GL_LINES);
+    glColor4f(color);
+    glVertex3f(renderMatrix ^ a);
+    glVertex3f(renderMatrix ^ b);
+    glEnd();
+}
+
+void RenderCamera::renderLine (const QVector4D& a,
+                               const QVector4D& b,
+                               const QColor& color,
+                               float lineWidth) const
+{
+    renderLine(QVector3D(a[0],a[1],a[2]),QVector3D(b[0],b[1],b[2]),color,lineWidth);
+}
+
+void RenderCamera::renderPlane(const QVector3D& a,
+                               const QVector3D& b,
+                               const QVector3D& c,
+                               const QVector3D& d,
+                               const QColor& color,
+                               float alpha) const
+{
+    glBegin(GL_QUADS);
+    glColor4f(color,fminf(fmaxf(0.0f,alpha),1.0f));
+    glVertex3f(renderMatrix ^ a);
+    glVertex3f(renderMatrix ^ b);
+    glVertex3f(renderMatrix ^ c);
+    glVertex3f(renderMatrix ^ d);
+    glEnd();
+}
+
+void RenderCamera::renderPCL  (const QVector<QVector4D>& pcl,
+                               const QColor& color,
+                               float pointSize) const
+{
+    glPointSize(fmaxf(1.0f,pointSize));
+    glBegin(GL_POINTS);
+    glColor3f(color);
+    for (const auto & p: pcl) glVertex3f(renderMatrix ^ p);
+    glEnd();
+}
+
+
+
+
+================================================
+File: RenderCamera.h
+================================================
+//
+//  This is the camera for the rendering (aka painting objects on the canvas) of the scene ONLY.
+//
+//  It provides methods to render primitives like points, lines, planes, and point clouds.
+//
+//  Note: If you need other primitives, you have to add your own render-method here.
+//
+// (c) Georg Umlauf, 2021 + 2022
+//
+#pragma once
+
+#include <QObject>
+#include <QMatrix4x4>
+#include <QVector3D>
+
+class RenderCamera : public QObject
+{
+  Q_OBJECT
+
+public:
+  RenderCamera(QObject* parent=nullptr);
+
+  // methods to render primitive geometric objects, e.g. points, lines, planes, point clouds, etc.
+  void renderPoint(const QVector3D& p,              // render affine point p
+                   const QColor&    color,
+                   float            pointSize=3.0f) const;
+  void renderPoint(const QVector4D& p,              // render homogeneous point p
+                   const QColor&    color,
+                   float            pointSize=3.0f) const;
+  void renderLine (const QVector3D& a,              // render line between affine points a and b
+                   const QVector3D& b,
+                   const QColor&    color,
+                   float            lineWidth=1.0f) const;
+  void renderLine (const QVector4D& a,              // render line between homogeneous points a and b
+                   const QVector4D& b,
+                   const QColor&    color,
+                   float            lineWidth=1.0f) const;
+  void renderPlane(const QVector3D& a,              // render plane between affine points a, b, c, d
+                   const QVector3D& b,
+                   const QVector3D& c,
+                   const QVector3D& d,
+                   const QColor&    color,
+                   float            transparency=0.2f) const;
+  void renderPCL  (const QVector<QVector4D>& pcl,   // render point cloud of homogeneous points
+                   const QColor&             color,
+                   float                     pointSize=3.0f) const;
+
+  // methods for render camera navigation
+  void setup   ();
+  void reset   ();
+  void forward ();
+  void backward();
+  void left    ();
+  void right   ();
+  void up      ();
+  void down    ();
+  void rotate  (int dx, int dy, int dz);
+
+  // setter-methods for render camera parameters
+  void setPosition        (const QVector3D&  p);
+  void setProjectionMatrix(const QMatrix4x4& P);
+  void setCameraMatrix    (const QMatrix4x4& C);
+  void setWorldMatrix     (const QMatrix4x4& W);
+
+  // getter-methods for render camera mappings
+  QMatrix4x4 getRenderMatrix() const;
+  QMatrix4x4 getViewMatrix  () const;
+
+signals:
+  void changed();
+
+public slots:
+  void setXRotation(int angle);
+  void setYRotation(int angle);
+  void setZRotation(int angle);
+
+private:
+  int xRotation;
+  int yRotation;
+  int zRotation;
+
+  QVector3D  position;
+  QMatrix4x4 projectionMatrix;
+  QMatrix4x4 cameraMatrix;
+  QMatrix4x4 worldMatrix;
+  QMatrix4x4 renderMatrix;
+
+  const int   RotationBASE    = 360;
+  const int   RotationSTEP    = 1;
+  const float TranslationSTEP = 0.002f;
+};
+
+
+
+
+
+================================================
+File: SceneManager.cpp
+================================================
+//
+//  A very simple class for rudimentary scene management
+//
+//  (c) Georg Umlauf, 2021+2022
+//
+
+#include "SceneManager.h"
+
+using enum SceneObjectType;
+//
+// iterates all objects under its control and has them drawn by the renderer
+//
+void SceneManager::draw(const RenderCamera& renderer, const QColor& color) const
+{
+    for (auto obj : *this) if (obj) {
+        switch (obj->getType()) {
+        case ST_AXES:
+            obj->draw(renderer,COLOR_AXES,2.0f);
+            break;
+        case ST_PLANE:
+            obj->draw(renderer,COLOR_PLANE,0.3f);
+            break;
+        case ST_CUBE:
+        case ST_HEXAHEDRON:
+            obj->draw(renderer,color,2.0f);
+            break;
+        case ST_POINT_CLOUD:
+            obj->draw(renderer,COLOR_POINT_CLOUD,3.0f);     // last argument unused
+            break;
+        case ST_PERSPECTIVE_CAMERA:
+            // TODO: Assignement 1, Part 3
+            // This is the place to invoke the perspective camera's projection method and draw the projected objects.
+           break;
+        case ST_STEREO_CAMERA:
+            // TODO: Assignement 2, Part 1 - 3
+            // Part 1: This is the place to invoke the stereo camera's projection method and draw the projected objects.
+            // Part 2: This is the place to invoke the stereo camera's reconstruction method.
+            // Part 3: This is the place to invoke the stereo camera's reconstruction method using misaligned stereo cameras.
+           break;
+        }
+    }
+}
+
+
+
+================================================
+File: SceneManager.h
+================================================
+//
+//  A very simple class for rudimentary scene management
+//
+//  (c) Georg Umlauf, 2021+2022
+//
+#pragma once
+
+#include "SceneObject.h"
+#include "RenderCamera.h"
+
+#include <vector>
+#include <QObject>
+#include <QColor>
+
+class SceneManager: public QObject, public std::vector<SceneObject*>
+{
+private:
+public:
+    SceneManager(QObject* parent=nullptr): QObject(parent) {}
+    ~SceneManager () override {}
+
+    // Iterates all objects under its control and has them drawn by the renderer
+    //
+    // ATTENTION: You have to inherit from SceneObject, i.e., you MUST implement your own
+    //            draw- and affineMap-method in your SceneObjects!!!!!
+    //            This draw-method is going to use these methods.
+    //
+    void draw(const RenderCamera& renderer,
+              const QColor      & color    = COLOR_SCENE) const;
+};
+
+
+
+
+================================================
+File: SceneObject.cpp
+================================================
+//
+//  A very simple ABSTRACT class for objects in the scene
+//
+// (c) Georg Umlauf, 2021
+//
+
+
+// Nothing to do here, yet...
+
+
+
+
+================================================
+File: SceneObject.h
+================================================
+//
+//  A very simple ABSTRACT class for objects in the scene
+//
+//  ATTENTION: If you inherit from this class, you MUST implement your own draw- and affineMap-method!!!!!
+//
+//  (c) Georg Umlauf, 2021+2022
+//
+#pragma once
+
+#include <QColor>
+#include <QMatrix4x4>
+#include "RenderCamera.h"
+
+// some predefined colors
+[[maybe_unused]] const QColor COLOR_AXES           = QColor(255,  0,  0);
+[[maybe_unused]] const QColor COLOR_PLANE          = QColor(255,255,  0);
+[[maybe_unused]] const QColor COLOR_SCENE          = QColor(  0,255,  0);
+[[maybe_unused]] const QColor COLOR_RECONSTRUCTION = QColor(255,  0,  0);
+[[maybe_unused]] const QColor COLOR_CAMERA         = QColor(255,  0,  0);
+[[maybe_unused]] const QColor COLOR_POINT_CLOUD    = QColor(255,255,255);
+
+// some example object types, that you might use
+enum class SceneObjectType {ST_NONE                     [[maybe_unused]],   //
+                            ST_PLANE                    [[maybe_unused]],   //
+                            ST_AXES                     [[maybe_unused]],   // coordinate systems
+                            ST_HEXAHEDRON               [[maybe_unused]],   //
+                            ST_CUBE                     [[maybe_unused]],   //
+                            ST_PERSPECTIVE_CAMERA       [[maybe_unused]],   // perspective camera
+                            ST_STEREO_CAMERA            [[maybe_unused]],   // stereo cameras
+                            ST_POINT_CLOUD              [[maybe_unused]],   // point cloud
+                            ST_MaxSceneType             [[maybe_unused]],
+                            ST_PERSPECTIVECAMERA        [[maybe_unused]]};  // unsere eigene
+
+class SceneObject
+{
+protected:
+    SceneObjectType type;
+
+public:
+    SceneObject(                      ): type(SceneObjectType::ST_NONE) {}
+    SceneObject(const SceneObject&  so): type(            so.getType()) {}
+    SceneObject(const SceneObject&& so): type(            so.getType()) {}
+    virtual ~SceneObject()  {}
+
+    virtual void affineMap(const QMatrix4x4&                        )       = 0;
+    virtual void draw     (const RenderCamera&, const QColor&, float) const = 0;
+
+    SceneObjectType getType() const { return type; }
+};
+
+
+
+================================================
+File: glwidget.cpp
+================================================
+//
+// (c) Nico BrÃ¼gel, 2021
+// (c) Georg Umlauf, 2021+2022+2024
+//
+#include "glwidget.h"
+#include <QtGui>
+#include <GL/gl.h>
+#include <QApplication>
+#include <QtGui>
+#include <QMouseEvent>
+#include <QFileDialog>
+#include <QMessageBox>
+
+#include <cassert>
+#include <iostream>
+
+#include "Axes.h"
+#include "Plane.h"
+#include "PointCloud.h"
+//#include "Hexahedron.h"
+#include "Cube.h"
+#include "PerspectiveCamera.h"
+
+
+using namespace std;
+using namespace Qt;
+
+GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent), pointSize(5)
+{
+    // enable mouse-events, even if no mouse-button is pressed -> yields smoother mouse-move reactions
+    setMouseTracking(true);
+
+    // setup render camera and connect its signals
+    renderer = new RenderCamera();
+    renderer->reset();
+    connect(renderer, &RenderCamera::changed, this, &GLWidget::onRendererChanged);
+
+    // setup the scene
+    sceneManager.push_back(new Axes(E0,QMatrix4x4()));    // the global world coordinate system
+    sceneManager.push_back(new Plane(E0+4*E3,-E3));       // some plane
+
+    // TODO: Assignment 1, Part 1
+    //       Add here your own new 3d scene objects, e.g. cubes, hexahedra, etc.,
+    //       analog to line 50 above and the respective Axes-class
+    //
+    sceneManager.push_back(new Cube(E0, 0.5));
+    sceneManager.push_back(new Hexahedron(QVector4D(2,2,1,1), 1.25, 0.75, 1.));
+    //sceneManager.push_back(new Hexahedron(QVector4D(2,2,1,2), 1.25, 0.75, 1.));
+    //sceneManager.push_back(new Hexahedron(QVector4D(2,2,1,3), 1.25, 0.75, 1.));
+    //sceneManager.push_back(new Hexahedron(QVector4D(2,2,1,4), 1.25, 0.75, 1.));
+
+    // TODO: Assignement 1, Part 2
+    //       Add here your own new scene object that represents a perspective camera.
+    //       Its draw-method should draw all relevant camera parameters, e.g. image plane, view axes, etc.
+    //
+    Axes cameraAxes = Axes(E1 * 2.,QMatrix4x4());
+    sceneManager.push_back(new PerspectiveCamera(cameraAxes, 2.0));
+
+    // TODO: Assignement 1, Part 3
+    //       Add to your perspective camera methods to project the other scene objects onto its image plane
+    //       and to draw the projected objects. These methods have to be invoked in Scene.cpp/Scene::draw.
+    //
+
+    // TODO: Assignement 2, Part 1 - 3
+    //       Add here your own new scene object that represents a stereo camera pair.
+    //       - Part 1: Its draw-method should draw all relevant parameters of both cameras, e.g. image planes, view axes, etc.
+    //       - Part 1: Its projection method should project the other scene objects onto their image planes
+    //         and draw the projected objects.
+    //       - Part 2: Its reconstruction method should reconstruct the 3d geometry of the other scene objects from their stereo projections.
+    //       - Part 3: Its reconstruction method should reconstruct the 3d geometry of the other scene objects from misaligned stereo projections.
+    //       - This has to be used in Scene.cpp/Scene::draw.
+    //
+}
+
+//
+//  destructor has nothing to do, since it's under Qt control
+//
+GLWidget::~GLWidget()
+{
+}
+
+//
+//  initializes the canvas and OpenGL context
+//
+void GLWidget::initializeGL()
+{
+      // ensure GL flags
+      glEnable(GL_POINT_SMOOTH);
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      glClearColor(0.4f,0.4f,0.4f,1);                       // screen background color
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      glEnable(GL_DEPTH_TEST);
+      glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);               //required for gl_PointSize
+}
+
+//
+//  redraws the canvas
+//
+void GLWidget::paintGL()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    renderer->setup();
+
+    sceneManager.draw(*renderer,COLOR_SCENE);
+}
+
+//
+//  reacts on resize events
+//
+void GLWidget::resizeGL(int width, int height)
+{
+    QMatrix4x4 projectionMatrix;
+    projectionMatrix.setToIdentity();
+    projectionMatrix.perspective(70.0f, GLfloat(width) / GLfloat(height), 0.01f, 100.0f);
+    renderer->setProjectionMatrix(projectionMatrix);
+}
+
+//
+//  reacts on mouse-wheel events
+//
+void GLWidget::wheelEvent(QWheelEvent* event)
+{
+    // read the wheel angle and move renderer in/out
+    if (event->angleDelta().y() > 0) renderer->forward ();
+    else                             renderer->backward();
+}
+
+//
+//  reacts on key-release events
+//
+void GLWidget::keyReleaseEvent(QKeyEvent * event)
+{
+    switch ( event->key() )
+    {
+        // release renderer's axis of rotation
+      case Key_X: X_Pressed=false; break;
+      case Key_Y: Y_Pressed=false; break;
+        // for unhandled events, call keyReleaseEvent of parent class
+      default: QWidget::keyReleaseEvent(event); break;
+    }
+    update();
+}
+
+//
+//  reacts on key-press events
+//
+void GLWidget::keyPressEvent(QKeyEvent * event)
+{
+    switch ( event->key() )
+    {
+        // trigger translation of renderer using keyboard
+    case Key_4:
+    case Key_Left:     renderer->left    (); break;
+    case Key_6:
+    case Key_Right:    renderer->right   (); break;
+    case Key_9:
+    case Key_PageUp:   renderer->forward (); break;
+    case Key_3:
+    case Key_PageDown: renderer->backward(); break;
+    case Key_8:
+    case Key_Up:       renderer->up      (); break;
+    case Key_2:
+    case Key_Down:     renderer->down    (); break;
+        // reset renderer's position
+    case Key_R:        renderer->reset   (); break;
+        // clamp renderer's axis of rotation
+    case Key_X:        X_Pressed=true;       break;
+    case Key_Y:        Y_Pressed=true;       break;    // translate point cloud
+    case Key_Z: {
+        QMatrix4x4 A;
+        A.translate(0.0f,0.0f,event->modifiers()&ShiftModifier?-0.1f:0.1f);
+        for (auto s: sceneManager) if (s->getType()==SceneObjectType::ST_POINT_CLOUD) s->affineMap(A);
+        break;
+    }
+        // quit application
+    case Key_Q:
+    case Key_Escape: QApplication::instance()->quit(); break;
+        // for unhandled events call keyPressEvent of parent class
+    default: QWidget::keyPressEvent(event);  break;
+    }
+    update();
+}
+
+//
+//  reacts on mouse-move events
+//
+void GLWidget::mouseMoveEvent(QMouseEvent *event)
+{
+    QPoint d = event->pos()-prevMousePosition;
+    prevMousePosition = event->pos();
+
+    // if left-mouse-button is pressed, trigger rotation of renderer
+    if (event->buttons() & Qt::LeftButton)
+    {
+        renderer->rotate(X_Pressed?0:d.y(), Y_Pressed?0:d.x(), 0);
+    }
+    // if right-mouse-button is pressed, trigger translation of renderer
+    else if ( event->buttons() & Qt::RightButton)
+    {
+        if (d.x() < 0) renderer->right();
+        if (d.x() > 0) renderer->left();
+        if (d.y() < 0) renderer->down();
+        if (d.y() > 0) renderer->up();
+    }
+}
+
+//
+//  triggers re-draw, if renderer emits changed-signal
+//
+void GLWidget::onRendererChanged()
+{
+    update();
+}
+
+//
+// updates the point size in each point cloud in the scene management
+//
+void GLWidget::setPointSize(int size)
+{
+    assert(size > 0);
+    pointSize = size;
+    for (auto s: sceneManager) if (s->getType()==SceneObjectType::ST_POINT_CLOUD) reinterpret_cast<PointCloud*>(s)->setPointSize(unsigned(pointSize));
+    update();
+}
+
+//
+// 1. reacts on push button click
+// 2. opens file dialog
+// 3. loads ply-file data to new point cloud
+// 4. attaches new point cloud to scene management
+//
+void GLWidget::openFileDialog()
+{
+    const QString filePath   = QFileDialog::getOpenFileName(this, tr("Open PLY file"), "../data", tr("PLY Files (*.ply)"));
+    PointCloud*   pointCloud = new PointCloud;
+
+    if (!filePath.isEmpty() && pointCloud)
+    {
+         cout << filePath.toStdString() << endl;
+         pointCloud->loadPLY(filePath);
+         pointCloud->setPointSize(unsigned(pointSize));
+         sceneManager.push_back(pointCloud);
+         update();
+         return;
+     }
+     delete pointCloud;
+}
+
+//
+// controls radio button clicks
+//
+void GLWidget::radioButtonClicked()
+{
+    // TODO: toggle to
+    QMessageBox::warning(this, "Feature" ,"Some things are missing here. Implement yourself, if necessary.");
+    if (sender()) {
+       QString      name = sender()->objectName();
+       if (name=="radioButton_1") {};
+       if (name=="radioButton_2") {};
+       update();
+    }
+}
+
+//
+// controls check box clicks
+//
+void GLWidget::checkBoxClicked()
+{
+    QMessageBox::warning(this, "Feature" ,"ups hier fehlt noch was");
+}
+
+//
+// controls spin box changes
+//
+void GLWidget::spinBoxValueChanged(int)
+{
+    QMessageBox::warning(this, "Feature" ,"ups hier fehlt noch was");
+}
+
+
+
+
+================================================
+File: glwidget.h
+================================================
+//
+// Widget fÃ¼r Interaktion und Kontrolle
+//
+// (c) Nico BrÃ¼gel, 2021
+// (c) Georg Umlauf, 2021+2022+2024
+//
+#pragma once
+
+#include <QOpenGLWidget>
+
+#include "RenderCamera.h"           // containes declaration of Renderer
+#include "SceneManager.h"       // containes declaration of Scene Manager
+
+class GLWidget : public QOpenGLWidget
+{
+    Q_OBJECT
+private:
+    // scene and scene control
+    int           pointSize;
+    SceneManager  sceneManager;
+
+public:
+    GLWidget(QWidget* parent = nullptr);
+    ~GLWidget() Q_DECL_OVERRIDE;
+
+public slots:
+    // button + slider controls
+    void openFileDialog     ();    // opens and loads a PLY file to a point cloud
+    void radioButtonClicked ();    // handles radio buttons
+    void checkBoxClicked    ();    // handle check boxes
+    void spinBoxValueChanged(int); // handles spin  boxes changes
+    void setPointSize       (int);
+
+protected:
+    // painting the canvas
+    void paintGL     (                     ) Q_DECL_OVERRIDE;
+    void initializeGL(                     ) Q_DECL_OVERRIDE;
+    void resizeGL    (int width, int height) Q_DECL_OVERRIDE;
+
+protected:
+    // mouse + wheel + key navigation
+    void keyPressEvent  (QKeyEvent   *event) Q_DECL_OVERRIDE;   // handles key-press   events
+    void keyReleaseEvent(QKeyEvent   *event) Q_DECL_OVERRIDE;   // handles key-release events
+    void wheelEvent     (QWheelEvent *event) Q_DECL_OVERRIDE;   // handles wheel       events
+    void mouseMoveEvent (QMouseEvent *event) Q_DECL_OVERRIDE;   // handles mouse-move  events
+
+private slots:
+    // handle changes of the renderer
+    void onRendererChanged();
+
+private:
+    // interaction control
+    bool   X_Pressed = false;
+    bool   Y_Pressed = false;
+    QPoint prevMousePosition;
+
+    // rendering control
+    RenderCamera* renderer=nullptr;
+};
+
+
+
+
+
+================================================
+File: main.cpp
+================================================
+//
+// (c) Georg Umlauf, 2021
+//
+#include "mainwindow.h"
+
+#include <QtWidgets/QApplication>
+
+int main(int argc, char *argv[])
+{
+    QApplication app(argc, argv);
+    MainWindow window;
+    window.show();
+    return app.exec();
+}
+
+
+
+================================================
+File: mainwindow.cpp
+================================================
+//
+// (c) Georg Umlauf, 2021
+//
+#include "mainwindow.h"
+#include <QFileDialog>
+#include <QKeyEvent>
+#include <iostream>
+
+MainWindow::MainWindow(QWidget *parent)
+	: QMainWindow(parent), ui(new Ui::MainWindowClass)
+{
+    ui->setupUi(this);
+	ui->glwidget->setFocusPolicy(Qt::StrongFocus);
+    ui->glwidget->setFocus();
+
+    connect(ui->pushButton,       &QPushButton ::clicked,      ui->glwidget, &GLWidget  ::openFileDialog);
+    connect(ui->radioButton_1,    &QRadioButton::clicked,      ui->glwidget, &GLWidget  ::radioButtonClicked);
+    connect(ui->radioButton_2,    &QRadioButton::clicked,      ui->glwidget, &GLWidget  ::radioButtonClicked);
+    connect(ui->horizontalSlider, &QSlider     ::valueChanged, this,         &MainWindow::updatePointSize);
+
+    updatePointSize(3);
+}
+
+MainWindow::~MainWindow()
+{
+	delete ui;
+}
+
+void MainWindow::updatePointSize(int value)
+{
+    std::cout << "new pointsize: " << value << std::endl;
+    ui->glwidget->setPointSize(value);
+}
+
+
+
+================================================
+File: mainwindow.h
+================================================
+//
+// (c) Georg Umlauf, 2021
+//
+#pragma once
+
+#include <QtWidgets/QMainWindow>
+#include "ui_mainwindow.h"
+
+class MainWindow : public QMainWindow
+{
+	Q_OBJECT
+
+public:
+    MainWindow(QWidget *parent = nullptr);
+    ~MainWindow() override;
+
+protected slots:
+    void updatePointSize(int);
+
+private:
+    Ui::MainWindowClass* ui;
+};
+
+
