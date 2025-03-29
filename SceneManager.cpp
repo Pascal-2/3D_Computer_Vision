@@ -30,7 +30,7 @@ void SceneManager::draw(const RenderCamera& renderer, const QColor& color) const
         case ST_PERSPECTIVE_CAMERA:
             // TODO: Assignement 1, Part 3
             // This is the place to invoke the perspective camera's projection method and draw the projected objects.
-            obj->draw(renderer,QColor(QColorConstants::Red),NULL);
+            obj->draw(renderer,QColor(QColorConstants::Red), 0.2); //float for line width currently not used by persCam
            break;
         case ST_STEREO_CAMERA:
             // TODO: Assignement 2, Part 1 - 3

@@ -51,7 +51,7 @@ GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent), pointSize(5)
     //       analog to line 50 above and the respective Axes-class
     //
     Cube* cube1 = new Cube(E1 * 5.0, 0.5);
-    Hexahedron* hex1 = new Hexahedron(QVector4D(10,-1,1,1), 1.25, 0.75, 1.);
+    Hexahedron* hex1 = new Hexahedron(QVector4D(10,-1,1,1), 1.25, 1.75, 0.9);
     (*pc).addCube(*cube1);
     (*pc).addHexahedron(*hex1);
     sceneManager.push_back(cube1);
