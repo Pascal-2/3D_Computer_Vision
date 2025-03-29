@@ -4,6 +4,7 @@
 //#pragma once
 
 #include "Axes.h"
+#include "Cube.h"
 #include "Plane.h"
 #include "SceneObject.h"
 
@@ -16,15 +17,18 @@ public:
     virtual ~PerspectiveCamera() override {}
     virtual void affineMap(const QMatrix4x4  & matrix) override;
     PerspectiveCamera& operator=(const PerspectiveCamera& pc);
-    void addObject(SceneObject*);
-    std::vector<std::tuple<QVector4D,QVector4D>> projection();
+    void addCube(Cube el);
+    void addHexahedron(Hexahedron el);
+
 private:
     Axes axes;
     float f;
     Plane imagePlane;
-    QVector4D h;
+    QVector4D H;
+    QVector4D N;
     QVector4D n;
-    std::vector<SceneObject*> objects;
+    std::optional<std::array<QVector4D, 8>> projection(std::array<QVector4D, 8> object);
+    std::vector<std::array<QVector4D, 8>> objects;
 };
 
 

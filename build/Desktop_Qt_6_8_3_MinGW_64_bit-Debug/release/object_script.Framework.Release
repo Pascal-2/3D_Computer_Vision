@@ -7,6 +7,7 @@ release/QtConvenience.o
 release/Axes.o
 release/Cube.o
 release/Hexahedron.o
+release/PerspectiveCamera.o
 release/Plane.o
 release/RenderCamera.o
 release/SceneManager.o

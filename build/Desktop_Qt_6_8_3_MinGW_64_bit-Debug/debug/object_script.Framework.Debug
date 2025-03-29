@@ -7,6 +7,7 @@ debug/QtConvenience.o
 debug/Axes.o
 debug/Cube.o
 debug/Hexahedron.o
+debug/PerspectiveCamera.o
 debug/Plane.o
 debug/RenderCamera.o
 debug/SceneManager.o

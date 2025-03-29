@@ -36,23 +36,29 @@ GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent), pointSize(5)
     connect(renderer, &RenderCamera::changed, this, &GLWidget::onRendererChanged);
 
     // setup the scene
-    sceneManager.push_back(new Axes(E0,QMatrix4x4()));    // the global world coordinate system
-    sceneManager.push_back(new Plane(E0+4*E3,-E3));       // some plane
+
+    QMatrix4x4 cameraRotation = QMatrix4x4();
+    Axes cameraAxes = Axes((E1+E0) * 2.0, cameraRotation);
+    PerspectiveCamera* pc = new PerspectiveCamera(cameraAxes, 2.0);
+    sceneManager.push_back(pc);
+
+
+    //sceneManager.push_back(new Axes(E0,QMatrix4x4()));    // the global world coordinate system
+    //sceneManager.push_back(new Plane(E0+4*E3,-E3));       // some plane
 
     // TODO: Assignment 1, Part 1
     //       Add here your own new 3d scene objects, e.g. cubes, hexahedra, etc.,
     //       analog to line 50 above and the respective Axes-class
     //
-    sceneManager.push_back(new Cube(E1 * 5.0, 0.5));
-    sceneManager.push_back(new Hexahedron(QVector4D(10,-1,1,1), 1.25, 0.75, 1.));
+    Cube* cube1 = new Cube(E1 * 5.0, 0.5);
+    Hexahedron* hex1 = new Hexahedron(QVector4D(10,-1,1,1), 1.25, 0.75, 1.);
+    (*pc).addCube(*cube1);
+    (*pc).addHexahedron(*hex1);
+    sceneManager.push_back(cube1);
+    sceneManager.push_back(hex1);
     //sceneManager.push_back(new Hexahedron(QVector4D(2,2,1,2), 1.25, 0.75, 1.));
     //sceneManager.push_back(new Hexahedron(QVector4D(2,2,1,3), 1.25, 0.75, 1.));
     //sceneManager.push_back(new Hexahedron(QVector4D(2,2,1,4), 1.25, 0.75, 1.));
-
-    //for testing:
-    Hexahedron hexe = Hexahedron(QVector4D(30,-1,1,1), 1.25, 0.75, 1.);
-    std::array<QVector4D,8> test = hexe.getPoints();
-    std::cout << test[0].x() << "Something should be printed to the left of this.";
 
     // TODO: Assignement 1, Part 2
     //       Add here your own new scene object that represents a perspective camera.
@@ -62,13 +68,12 @@ GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent), pointSize(5)
     //QVector4D R1 = QVector4D(0,1,0,0);
     //QVector4D R2 = QVector4D(0,0,1,0);
     //QVector4D R3 = QVector4D(0,0,0,1);
-    QMatrix4x4 cameraRotation = QMatrix4x4();
+
     //cameraRotation.setRow(0, R0);
     //cameraRotation.setRow(0, R1);
     //cameraRotation.setRow(0, R2);
     //cameraRotation.setRow(0, R3);
-    Axes cameraAxes = Axes((E1+E0) * 2.0, cameraRotation);
-    sceneManager.push_back(new PerspectiveCamera(cameraAxes, 2.0));
+
 
     // TODO: Assignement 1, Part 3
     //       Add to your perspective camera methods to project the other scene objects onto its image plane
