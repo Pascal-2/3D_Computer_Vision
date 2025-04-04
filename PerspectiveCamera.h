@@ -19,6 +19,9 @@ public:
     PerspectiveCamera& operator=(const PerspectiveCamera& pc);
     void addCube(Cube el);
     void addHexahedron(Hexahedron el);
+    std::vector<std::array<QVector4D, 8>> getObjects();
+    QVector4D getCenterOfProjection();
+    float getFocalLength();
 
 private:
     Axes axes;

@@ -54,5 +54,5 @@ QVector4D Axes::getOrigin() {
     return origin;
 }
 QVector3D Axes::getZ() {
-    return axes[2];
+    return axes[1] - QVector3D(origin);
 }

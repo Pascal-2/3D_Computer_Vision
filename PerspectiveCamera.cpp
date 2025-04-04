@@ -1,4 +1,5 @@
 #include "PerspectiveCamera.h"
+#include <iostream>
 
 
 
@@ -50,7 +51,6 @@ void PerspectiveCamera::draw (const RenderCamera& renderer, const QColor&, float
 
     }
 
-
 }
 
 void PerspectiveCamera::affineMap(const QMatrix4x4& M)
@@ -92,5 +92,17 @@ std::optional<std::array<QVector4D, 8>> PerspectiveCamera::projection(std::array
         projected_object[j] = schnitt;
     }
     return projected_object;
+}
+
+std::vector<std::array<QVector4D, 8>> PerspectiveCamera::getObjects() {
+    return objects;
+}
+
+QVector4D PerspectiveCamera::getCenterOfProjection() {
+    return N;
+}
+
+float PerspectiveCamera::getFocalLength() {
+    return f;
 }
 

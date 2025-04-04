@@ -30,7 +30,7 @@ void SceneManager::draw(const RenderCamera& renderer, const QColor& color) const
         case ST_PERSPECTIVE_CAMERA:
             // TODO: Assignement 1, Part 3
             // This is the place to invoke the perspective camera's projection method and draw the projected objects.
-            obj->draw(renderer,QColor(QColorConstants::Red), 0.2); //float for line width currently not used by persCam
+            obj->draw(renderer,QColor(QColorConstants::Red), 0.2); //float for line width and colour currently not used by persCam
            break;
         case ST_STEREO_CAMERA:
             // TODO: Assignement 2, Part 1 - 3
@@ -38,6 +38,9 @@ void SceneManager::draw(const RenderCamera& renderer, const QColor& color) const
             // Part 2: This is the place to invoke the stereo camera's reconstruction method.
             // Part 3: This is the place to invoke the stereo camera's reconstruction method using misaligned stereo cameras.
            break;
+        case ST_RECONSTRUCTOR:
+            //our name for ST_STEREO_CAMERA
+            obj->draw(renderer,QColor(QColorConstants::Blue), 0.2); //line width and colour currently not used
         }
     }
 }

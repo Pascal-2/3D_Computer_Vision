@@ -20,6 +20,7 @@
 //#include "Hexahedron.h"
 #include "Cube.h"
 #include "PerspectiveCamera.h"
+#include "reconstructor.h"
 
 
 using namespace std;
@@ -37,28 +38,13 @@ GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent), pointSize(5)
 
     // setup the scene
 
-    QMatrix4x4 cameraRotation = QMatrix4x4();
-    Axes cameraAxes = Axes((E1+E0) * 2.0, cameraRotation);
-    PerspectiveCamera* pc = new PerspectiveCamera(cameraAxes, 2.0);
-    sceneManager.push_back(pc);
 
 
-    //sceneManager.push_back(new Axes(E0,QMatrix4x4()));    // the global world coordinate system
+
+    sceneManager.push_back(new Axes(E0,QMatrix4x4()));    // the global world coordinate system
     //sceneManager.push_back(new Plane(E0+4*E3,-E3));       // some plane
 
-    // TODO: Assignment 1, Part 1
-    //       Add here your own new 3d scene objects, e.g. cubes, hexahedra, etc.,
-    //       analog to line 50 above and the respective Axes-class
-    //
-    Cube* cube1 = new Cube(E1 * 5.0, 0.5);
-    Hexahedron* hex1 = new Hexahedron(QVector4D(10,-1,1,1), 1.25, 1.75, 0.9);
-    (*pc).addCube(*cube1);
-    (*pc).addHexahedron(*hex1);
-    sceneManager.push_back(cube1);
-    sceneManager.push_back(hex1);
-    //sceneManager.push_back(new Hexahedron(QVector4D(2,2,1,2), 1.25, 0.75, 1.));
-    //sceneManager.push_back(new Hexahedron(QVector4D(2,2,1,3), 1.25, 0.75, 1.));
-    //sceneManager.push_back(new Hexahedron(QVector4D(2,2,1,4), 1.25, 0.75, 1.));
+
 
     // TODO: Assignement 1, Part 2
     //       Add here your own new scene object that represents a perspective camera.
@@ -68,6 +54,10 @@ GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent), pointSize(5)
     //QVector4D R1 = QVector4D(0,1,0,0);
     //QVector4D R2 = QVector4D(0,0,1,0);
     //QVector4D R3 = QVector4D(0,0,0,1);
+    QMatrix4x4 cameraRotation = QMatrix4x4();
+    Axes cameraAxes = Axes((E1+E0) * 2.0, cameraRotation);
+    PerspectiveCamera* pc = new PerspectiveCamera(cameraAxes, 2.0);
+    sceneManager.push_back(pc);
 
     //cameraRotation.setRow(0, R0);
     //cameraRotation.setRow(0, R1);
@@ -78,7 +68,7 @@ GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent), pointSize(5)
     // TODO: Assignement 1, Part 3
     //       Add to your perspective camera methods to project the other scene objects onto its image plane
     //       and to draw the projected objects. These methods have to be invoked in Scene.cpp/Scene::draw.
-    //
+    //We wrote a new class "PerspectiveCamera". Find all the methods there, please.
 
     // TODO: Assignement 2, Part 1 - 3
     //       Add here your own new scene object that represents a stereo camera pair.
@@ -89,6 +79,28 @@ GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent), pointSize(5)
     //       - Part 3: Its reconstruction method should reconstruct the 3d geometry of the other scene objects from misaligned stereo projections.
     //       - This has to be used in Scene.cpp/Scene::draw.
     //
+    QMatrix4x4 cameraRotation2 = QMatrix4x4();
+    Axes cameraAxes2 = Axes((E1+E0+1.02*E3) * 2.0, cameraRotation2);
+    PerspectiveCamera* pc2 = new PerspectiveCamera(cameraAxes2, 2.0);
+    sceneManager.push_back(pc2);
+
+    // TODO: Assignment 1, Part 1
+    //       Add here your own new 3d scene objects, e.g. cubes, hexahedra, etc.,
+    //       analog to line 50 above and the respective Axes-class
+    //
+    Cube* cube1 = new Cube(E1 * 7.0 + 0.2*E3, 0.5);
+    Hexahedron* hex1 = new Hexahedron(QVector4D(10,-1,1,1), 1.25, 1.75, 0.9);
+    (*pc).addCube(*cube1);
+    (*pc).addHexahedron(*hex1);
+    (*pc2).addCube(*cube1);
+    (*pc2).addHexahedron(*hex1);
+    sceneManager.push_back(cube1);
+    sceneManager.push_back(hex1);
+
+    //for Assignment 2: Reconstructor (= Stereo Cam)
+    Reconstructor* rec = new Reconstructor(*pc, *pc2);
+    sceneManager.push_back(rec);
+
 }
 
 //

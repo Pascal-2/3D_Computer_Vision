@@ -33,7 +33,8 @@ HEADERS += ./glwidget.h \
     Plane.h \
     RenderCamera.h \
     SceneManager.h \
-    SceneObject.h
+    SceneObject.h \
+    reconstructor.h
 
 SOURCES += ./glwidget.cpp \
      ./mainwindow.cpp \
@@ -48,6 +49,7 @@ SOURCES += ./glwidget.cpp \
     Plane.cpp \
     RenderCamera.cpp \
     SceneManager.cpp \
-    SceneObject.cpp
+    SceneObject.cpp \
+    reconstructor.cpp
 
 FORMS += ./mainwindow.ui
