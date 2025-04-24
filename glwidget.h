@@ -30,6 +30,7 @@ public slots:
     void checkBoxClicked    ();    // handle check boxes
     void spinBoxValueChanged(int); // handles spin  boxes changes
     void setPointSize       (int);
+    void setCameraAngle(int); // our own try on a slider
 
 protected:
     // painting the canvas

@@ -55,14 +55,17 @@ GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent), pointSize(5)
     //QVector4D R2 = QVector4D(0,0,1,0);
     //QVector4D R3 = QVector4D(0,0,0,1);
     QMatrix4x4 cameraRotation = QMatrix4x4();
+    cameraRotation.setColumn(2, QVector4D(0.1, 0, 1, 0));
     Axes cameraAxes = Axes((-E3+E0) * 2.0, cameraRotation);
     PerspectiveCamera* pc = new PerspectiveCamera(cameraAxes, 2.0);
     sceneManager.push_back(pc);
+    std::cout << "z-punkt von achse: \n" << cameraAxes.getZ().x() << "\n"
+              << cameraAxes.getZ().y() << "\n" << cameraAxes.getZ().z() << "\n";
 
     //cameraRotation.setRow(0, R0);
-    //cameraRotation.setRow(0, R1);
-    //cameraRotation.setRow(0, R2);
-    //cameraRotation.setRow(0, R3);
+    //cameraRotation.setRow(1, R1);
+    //cameraRotation.setRow(2, R2);
+    //cameraRotation.setRow(3, R3);
 
 
     // TODO: Assignement 1, Part 3
@@ -251,6 +254,17 @@ void GLWidget::setPointSize(int size)
 {
     assert(size > 0);
     pointSize = size;
+    for (auto s: sceneManager) if (s->getType()==SceneObjectType::ST_POINT_CLOUD) reinterpret_cast<PointCloud*>(s)->setPointSize(unsigned(pointSize));
+    update();
+}
+
+//
+// updates camera angle of 2nd camera for assignment 2
+//
+void GLWidget::setCameraAngle(int degrees)
+{
+    assert(degrees > 0);
+    pointSize = degrees;
     for (auto s: sceneManager) if (s->getType()==SceneObjectType::ST_POINT_CLOUD) reinterpret_cast<PointCloud*>(s)->setPointSize(unsigned(pointSize));
     update();
 }
