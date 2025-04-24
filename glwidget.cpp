@@ -55,7 +55,7 @@ GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent), pointSize(5)
     //QVector4D R2 = QVector4D(0,0,1,0);
     //QVector4D R3 = QVector4D(0,0,0,1);
     QMatrix4x4 cameraRotation = QMatrix4x4();
-    Axes cameraAxes = Axes((E1+E0) * 2.0, cameraRotation);
+    Axes cameraAxes = Axes((-E3+E0) * 2.0, cameraRotation);
     PerspectiveCamera* pc = new PerspectiveCamera(cameraAxes, 2.0);
     sceneManager.push_back(pc);
 
@@ -80,7 +80,7 @@ GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent), pointSize(5)
     //       - This has to be used in Scene.cpp/Scene::draw.
     //
     QMatrix4x4 cameraRotation2 = QMatrix4x4();
-    Axes cameraAxes2 = Axes((E1+E0+1.02*E3) * 2.0, cameraRotation2);
+    Axes cameraAxes2 = Axes((-E3+E0+1.02*E1) * 2.0, cameraRotation2);
     PerspectiveCamera* pc2 = new PerspectiveCamera(cameraAxes2, 2.0);
     sceneManager.push_back(pc2);
 
@@ -88,8 +88,8 @@ GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent), pointSize(5)
     //       Add here your own new 3d scene objects, e.g. cubes, hexahedra, etc.,
     //       analog to line 50 above and the respective Axes-class
     //
-    Cube* cube1 = new Cube(E1 * 7.0 + 0.2*E3, 0.5);
-    Hexahedron* hex1 = new Hexahedron(QVector4D(10,-1,1,1), 1.25, 1.75, 0.9);
+    Cube* cube1 = new Cube(E1*0.2 + (-7.0)*E3, 0.5);
+    Hexahedron* hex1 = new Hexahedron(QVector4D(1,-1,-10,1), 1.25, 1.75, 0.9);
     (*pc).addCube(*cube1);
     (*pc).addHexahedron(*hex1);
     (*pc2).addCube(*cube1);

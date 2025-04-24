@@ -8,7 +8,7 @@ PerspectiveCamera::PerspectiveCamera(Axes axes, float f): axes(axes), f(f) {
     // z achsenvektor normieren
     // N + f * normierter Vektor = H
     // Normalenvektor von imagePlane = normierter Vektor
-    QVector3D z = axes.getZ();
+    QVector3D z = - axes.getZ();
     z.normalize();
     n = QVector4D(z);
     QVector4D o4D = axes.getOrigin();
