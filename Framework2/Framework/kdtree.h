@@ -3,9 +3,7 @@
 #include "PointCloud.h"
 
 typedef struct {
-    float x;
-    float y;
-    float z;
+    float coordinates[3];
     int idx;
 } Point;
 
@@ -19,14 +17,13 @@ class KdTree
 {
 public:
     void print_tree(Node* node);
-    KdTree(const QString& filePath);
+    KdTree(std::vector<Point> point_cloud);
 
 private:
-    PointCloud *points;
+    std::vector<Point> points;
     int k;
     int n;
     std::vector<std::vector<int>> sorted_indices;
-    Point* point_pointer;
     Node *root;
     Node *build_kd_tree(std::vector<std::vector<int>> sorted_lists, int depth);
 };

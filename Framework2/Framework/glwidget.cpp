@@ -38,9 +38,13 @@ GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent), pointSize(5)
     sceneManager.push_back(new Axes(E0,QMatrix4x4()));    // the global world coordinate system
     sceneManager.push_back(new Plane(E0+4*E3,-E3));       // some plane
     PointCloud p = PointCloud();
-    p.loadPLY("../../../Data/bunny.ply");
-    std::cout << p[0][0] << "\n";
-    KdTree beech = KdTree("../../../Data/bunny.ply"); //print ist im Konstruktor
+    p.loadPLY("../../../data/bunny.ply");
+    std::vector<Point> tmp;
+    for (int i = 0; i < p.length(); i++) {
+        tmp.push_back((Point) {{p[i][0], p[i][1], p[i][2]}, i});
+    }
+    std::cout << "vor Aufruf des Konstruktors\n"; //debugging
+    KdTree beech = KdTree(tmp); //print ist im Konstruktor
 
 }
 
