@@ -17,11 +17,15 @@ struct Node {
 typedef struct {
     QVector4D origin;
     QVector4D center;
-    //QVector3D corners[8];
+    QVector3D corners[8];
     float dx;
     float dy;
     float dz;
 } Bounding_box;
+
+typedef struct {
+    QVector3D points[8];
+} Plane_box;
 
 class KdTree: public SceneObject
 {
@@ -39,8 +43,10 @@ private:
     int n;
     std::vector<std::vector<int>> sorted_indices;
     Node *root;
+    Bounding_box bbox;
     Node *build_kd_tree(std::vector<std::vector<int>> sorted_lists, int depth);
     Bounding_box get_bounding_box() const;
+    void draw_splits(Node* node, int depth, Plane_box box, const RenderCamera& renderer) const;
 };
 
 

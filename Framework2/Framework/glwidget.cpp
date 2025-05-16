@@ -36,7 +36,7 @@ GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent), pointSize(5)
 
     // setup the scene
     sceneManager.push_back(new Axes(E0,QMatrix4x4()));    // the global world coordinate system
-    sceneManager.push_back(new Plane(E0+4*E3,-E3));       // some plane
+    //sceneManager.push_back(new Plane(E0+4*E3,-E3));       // some plane
     PointCloud p = PointCloud();
     p.loadPLY("../../../data/bunny.ply");
     std::vector<Point> tmp;

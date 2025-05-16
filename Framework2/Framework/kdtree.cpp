@@ -12,7 +12,123 @@ void KdTree::print_tree(Node* node) {
                   << node->point[2] << "\n";
         print_tree(node->right);
     }
+}
 
+void KdTree::draw_splits(Node* node, int depth, Plane_box box, const RenderCamera& renderer) const {
+    if (depth >= 6) {
+        return;
+    }
+    if (node != NULL) {
+        int axis = depth % 3;
+        float offset;
+
+        Plane_box boxl;
+        Plane_box boxr;
+        if (axis == 0) {
+            offset = abs(node->point[axis] - box.points[0][0]);
+            // BOXL
+            //bleiben gleich
+            boxl.points[0] = box.points[0];
+            boxl.points[1] = box.points[1];
+            boxl.points[4] = box.points[4];
+            boxl.points[5] = box.points[5];
+            //aendern sich
+            boxl.points[3] = box.points[0];
+            boxl.points[3][axis] += offset;
+            boxl.points[2] = box.points[1];
+            boxl.points[2][axis] += offset;
+            boxl.points[7] = box.points[4];
+            boxl.points[7][axis] += offset;
+            boxl.points[6] = box.points[5];
+            boxl.points[6][axis] += offset;
+            renderer.renderPlane(boxl.points[6],
+                                 boxl.points[2],
+                                 boxl.points[3],
+                                 boxl.points[7],
+                                 QColorConstants::Red, 0.2f);
+            // BOXR
+            //bleiben gleich
+            boxr.points[3] = box.points[3];
+            boxr.points[2] = box.points[2];
+            boxr.points[7] = box.points[7];
+            boxr.points[6] = box.points[6];
+            //aendern sich
+            boxr.points[0] = boxl.points[3];
+            boxr.points[1] = boxl.points[2];
+            boxr.points[4] = boxl.points[7];
+            boxr.points[5] = boxl.points[6];
+
+        } else if (axis == 1) {
+            offset = abs(node->point[axis] - box.points[0][1]);
+            // BOXL
+            //bleiben gleich
+            boxl.points[0] = box.points[0];
+            boxl.points[1] = box.points[1];
+            boxl.points[2] = box.points[2];
+            boxl.points[3] = box.points[3];
+            //aendern sich
+            boxl.points[4] = box.points[0];
+            boxl.points[4][axis] += offset;
+            boxl.points[5] = box.points[1];
+            boxl.points[5][axis] += offset;
+            boxl.points[6] = box.points[2];
+            boxl.points[6][axis] += offset;
+            boxl.points[7] = box.points[3];
+            boxl.points[7][axis] += offset;
+            renderer.renderPlane(boxl.points[6],
+                                 boxl.points[5],
+                                 boxl.points[4],
+                                 boxl.points[7],
+                                 QColorConstants::Green, 0.2f);
+            // BOXR
+            //bleiben gleich
+            boxr.points[4] = box.points[4];
+            boxr.points[5] = box.points[5];
+            boxr.points[7] = box.points[7];
+            boxr.points[6] = box.points[6];
+            //aendern sich
+            boxr.points[0] = boxl.points[4];
+            boxr.points[1] = boxl.points[5];
+            boxr.points[3] = boxl.points[7];
+            boxr.points[2] = boxl.points[6];
+
+        } else /* (axis == 3) */ {
+            offset = abs(node->point[axis] - box.points[0][2]);
+            // BOXL
+            //bleiben gleich
+            boxl.points[3] = box.points[3];
+            boxl.points[0] = box.points[0];
+            boxl.points[7] = box.points[7];
+            boxl.points[4] = box.points[4];
+            //aendern sich
+            boxl.points[2] = box.points[3];
+            boxl.points[2][axis] += offset;
+            boxl.points[1] = box.points[0];
+            boxl.points[1][axis] += offset;
+            boxl.points[6] = box.points[7];
+            boxl.points[6][axis] += offset;
+            boxl.points[5] = box.points[4];
+            boxl.points[5][axis] += offset;
+            renderer.renderPlane(boxl.points[5],
+                                 boxl.points[1],
+                                 boxl.points[2],
+                                 boxl.points[6],
+                                 QColorConstants::Blue, 0.2f);
+            // BOXR
+            //bleiben gleich
+            boxr.points[2] = box.points[2];
+            boxr.points[1] = box.points[1];
+            boxr.points[6] = box.points[6];
+            boxr.points[5] = box.points[5];
+            //aendern sich
+            boxr.points[3] = boxl.points[2];
+            boxr.points[0] = boxl.points[1];
+            boxr.points[7] = boxl.points[6];
+            boxr.points[4] = boxl.points[5];
+        }
+        draw_splits(node->left, depth + 1, boxl, renderer);
+        draw_splits(node->right, depth + 1, boxr, renderer);
+    }
 }
 
 KdTree::KdTree(std::vector<Point> point_cloud) {
@@ -42,6 +158,7 @@ KdTree::KdTree(std::vector<Point> point_cloud) {
     points = temp;
     std::vector<Point>().swap(temp);
     this->root = build_kd_tree(sorted_indices, 0);
+    this->bbox = get_bounding_box();
     //print_tree(root);
 
 }
@@ -121,22 +238,35 @@ Bounding_box KdTree::get_bounding_box() const {
     box.dy = max_y - min_y;
     box.dz = max_z - min_z;
     box.center = box.origin + QVector4D(box.dx/2, box.dy/2, box.dz/2, 0);
+    // fill corners
+    box.corners[0] = QVector3D(min_x, min_y, min_z);
+    box.corners[1] = QVector3D(min_x, min_y, max_z);
+    box.corners[2] = QVector3D(max_x, min_y, max_z);
+    box.corners[3] = QVector3D(max_x, min_y, min_z);
+    box.corners[4] = QVector3D(min_x, max_y, min_z);
+    box.corners[5] = QVector3D(min_x, max_y, max_z);
+    box.corners[6] = QVector3D(max_x, max_y, max_z);
+    box.corners[7] = QVector3D(max_x, max_y, min_z);
     return box;
 }
 
 
 void KdTree::draw(const RenderCamera& renderer, const QColor& cl, float fl) const {
-    Bounding_box box = get_bounding_box();
-    Hexahedron hexhe = Hexahedron(box.origin, box.dx, box.dy, box.dz);
+    Hexahedron hexhe = Hexahedron(bbox.origin, bbox.dx, bbox.dy, bbox.dz);
     hexhe.draw(renderer, cl, fl);
     for (int i = 0; i < points.size(); i++) {
         QVector3D point = QVector3D(points[i].coordinates[0],
                                     points[i].coordinates[1],
                                     points[i].coordinates[2]);
-        renderer.renderPoint(point, QColorConstants::Blue, 4.0);
+        renderer.renderPoint(point, QColorConstants::White, 3.0);
     }
-    renderer.renderPoint(box.origin, QColorConstants::Red, 8.0);
+    renderer.renderPoint(bbox.origin, QColorConstants::Red, 8.0);
 
+    Plane_box box;
+    for (int i = 0; i < 8; i++) {
+        box.points[i] = bbox.corners[i];
+    }
+    draw_splits(root, 0, box, renderer);
 }
 
 void KdTree::affineMap(const QMatrix4x4& M)
