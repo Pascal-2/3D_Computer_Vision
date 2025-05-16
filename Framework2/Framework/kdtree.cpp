@@ -42,10 +42,24 @@ int compare_z(const void *a, const void *b) {
     return 0;
 }
 
+void KdTree::print_tree(Node* node) {
+    if (node != NULL) {
+        print_tree(node->left);
+        std::cout << node->point[0] << ","
+                  << node->point[1] << ","
+                  << node->point[2] << "\n";
+        print_tree(node->right);
+    }
+
+}
+
 KdTree::KdTree(const QString& filePath) {
     // filePath = "../../../Data/bunny.ply"
-    this->points.loadPLY(filePath);
-    this->n = this->points.size();
+    this->points = new PointCloud();
+    bool isloaded = this->points->loadPLY(filePath);
+    std::cout << isloaded;
+    this->n = this->points->size();
+    std::cout << n << "\n";
     this->k = 3;
     this->point_pointer = (Point *)malloc(sizeof(Point) * this->n);
     if(!this->point_pointer) {
@@ -54,12 +68,11 @@ KdTree::KdTree(const QString& filePath) {
     }
 
     for(int i = 0; i < this->n; i++) {
-        this->point_pointer[i] = (Point) {this->points[i][0], this->points[i][1], this->points[i][2], i};
+        this->point_pointer[i] = (Point) {(*(this->points))[i][0], (*(this->points))[i][1], (*(this->points))[i][2], i};
     }
 
     qsort(this->point_pointer, this->n, sizeof(Point), compare_x);
     for(int i = 0; i < this->n; i++) {
-        this->sorted_indices[0][i] = this->point_pointer[i].idx;
         this->sorted_indices[0].push_back(this->point_pointer[i].idx);
     }
     qsort(this->point_pointer, this->n, sizeof(Point), compare_y);
@@ -70,11 +83,13 @@ KdTree::KdTree(const QString& filePath) {
     for(int i = 0; i < this->n; i++) {
         this->sorted_indices[2].push_back(this->point_pointer[i].idx);
     }
-
+    this->root = build_kd_tree(sorted_indices, 0);
+    print_tree(root);
 
 }
 
 Node *KdTree::build_kd_tree(std::vector<std::vector<int>> sorted_lists, int depth) {
+    std::cout << "1"; //debugging
     bool b = true;
     for (int i = 0; i < 3; i++) {
         if (sorted_lists[i].size() > 0) {
@@ -88,28 +103,45 @@ Node *KdTree::build_kd_tree(std::vector<std::vector<int>> sorted_lists, int dept
 
     int axis = depth % this->k;
 
-    if (!sorted_lists[axis].size() > 0) {
+    if (!(sorted_lists[axis].size() > 0)) {
         return NULL;
     }
 
     int median_idx = sorted_lists[axis].size() / 2;
     int median_point_idx = sorted_lists[axis][median_idx];
-    QVector4D median_point = this->points[median_point_idx];
+    QVector4D median_point = (*(this->points))[median_point_idx];
 
-    std::vector<int> left_sorted_lists;
-    std::vector<int> right_sorted_lists;
+    std::vector<std::vector<int>> left_sorted_lists;
+    std::vector<std::vector<int>> right_sorted_lists;
 
     for (int a = 0; a < 3; a++) {
         std::vector<int> left_list;
         std::vector<int> right_list;
         for (int x : sorted_lists[a]) {
-            if (this->points[x][axis] < median_point[axis])
+            if ((*(this->points))[x][axis] < median_point[axis]) {
+                left_list.push_back(x);
+            } else if ((*(this->points))[x][axis] > median_point[axis]) {
+                right_list.push_back(x);
+            }
         }
+        right_sorted_lists.push_back(right_list);
+        left_sorted_lists.push_back(left_list);
     }
-
-
+    Node *result = (Node *) malloc(sizeof(Node));
+    if (!result) {
+        std::cout << "Error using malloc\n";
+        exit(1);
+    }
+    //free(sorted_lists); TODO: free
+    Node *left = build_kd_tree(left_sorted_lists, depth + 1);
+    Node *right = build_kd_tree(right_sorted_lists, depth + 1);
+    *result = (Node) {left, right, {median_point[0], median_point[1], median_point[2]}};
+    return result;
 
 }
+
+
+
 
 //Für Abgabe 3:
 

@@ -14,20 +14,21 @@ struct Node {
     struct Node *right;
     float point[3];
 };
-int t = 3;
 
 class KdTree
 {
 public:
+    void print_tree(Node* node);
     KdTree(const QString& filePath);
-    Node *build_kd_tree(std::vector<std::vector<int>> sorted_lists, int depth);
 
 private:
-    PointCloud points;
+    PointCloud *points;
     int k;
     int n;
     std::vector<std::vector<int>> sorted_indices;
     Point* point_pointer;
+    Node *root;
+    Node *build_kd_tree(std::vector<std::vector<int>> sorted_lists, int depth);
 };
 
 

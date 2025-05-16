@@ -3,10 +3,10 @@
 // (c) Georg Umlauf, 2021+2022+2024
 //
 #include "glwidget.h"
-#include <QtGui>
+//#include <QtGui>
 #include <GL/gl.h>
 #include <QApplication>
-#include <QtGui>
+//#include <QtGui>
 #include <QMouseEvent>
 #include <QFileDialog>
 #include <QMessageBox>
@@ -17,7 +17,8 @@
 #include "Axes.h"
 #include "Plane.h"
 #include "PointCloud.h"
-#include "Cube.h"
+//#include "Cube.h"
+#include "kdtree.h"
 
 
 using namespace std;
@@ -36,7 +37,10 @@ GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent), pointSize(5)
     // setup the scene
     sceneManager.push_back(new Axes(E0,QMatrix4x4()));    // the global world coordinate system
     sceneManager.push_back(new Plane(E0+4*E3,-E3));       // some plane
-
+    PointCloud p = PointCloud();
+    p.loadPLY("../../../Data/bunny.ply");
+    std::cout << p[0][0] << "\n";
+    KdTree beech = KdTree("../../../Data/bunny.ply"); //print ist im Konstruktor
 
 }
 
