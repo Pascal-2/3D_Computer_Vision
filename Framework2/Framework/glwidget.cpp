@@ -43,8 +43,8 @@ GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent), pointSize(5)
     for (int i = 0; i < p.length(); i++) {
         tmp.push_back((Point) {{p[i][0], p[i][1], p[i][2]}, i});
     }
-    std::cout << "vor Aufruf des Konstruktors\n"; //debugging
-    KdTree beech = KdTree(tmp); //print ist im Konstruktor
+    KdTree *beech = new KdTree(tmp); //print ist im Konstruktor
+    sceneManager.push_back(beech);
 
 }
 

@@ -1,7 +1,7 @@
 #include "kdtree.h"
-#include "PointCloud.h"
 #include <iostream>
 #include <cstdlib>
+#include "Hexahedron.h"
 
 
 void KdTree::print_tree(Node* node) {
@@ -16,12 +16,13 @@ void KdTree::print_tree(Node* node) {
 }
 
 KdTree::KdTree(std::vector<Point> point_cloud) {
-    std::cout << "hallo, ich konstruiere\n"; //debugging
+    type = SceneObjectType::ST_KdTree;
     this->points = point_cloud;
     this->n = this->points.size();
-    std::cout << n << "\n";
     this->k = 3;
+    this->sorted_indices.resize(3);
 
+    std::vector<Point> temp = points;
     std::sort(points.begin(), points.end(), [](const Point &a, const Point &b) {
         return a.coordinates[0] < b.coordinates[0];
     });
@@ -38,13 +39,14 @@ KdTree::KdTree(std::vector<Point> point_cloud) {
     for(int i = 0; i < this->n; i++) {
         this->sorted_indices[2].push_back(this->points[i].idx);
     }
+    points = temp;
+    std::vector<Point>().swap(temp);
     this->root = build_kd_tree(sorted_indices, 0);
-    print_tree(root);
+    //print_tree(root);
 
 }
 
 Node *KdTree::build_kd_tree(std::vector<std::vector<int>> sorted_lists, int depth) {
-    std::cout << "1"; //debugging
     bool b = true;
     for (int i = 0; i < 3; i++) {
         if (sorted_lists[i].size() > 0) {
@@ -53,6 +55,7 @@ Node *KdTree::build_kd_tree(std::vector<std::vector<int>> sorted_lists, int dept
         }
     }
     if (b) {
+        //std::cout << depth << "\n";
         return NULL;
     }
 
@@ -89,7 +92,13 @@ Node *KdTree::build_kd_tree(std::vector<std::vector<int>> sorted_lists, int dept
         std::cout << "Error using malloc\n";
         exit(1);
     }
-    //free(sorted_lists); TODO: free
+    //free sorted_lists
+    for (auto& innerVec : sorted_lists) {
+        std::vector<int>().swap(innerVec); // Frees memory of inner vector
+    }
+    std::vector<std::vector<int>>().swap(sorted_lists); // Frees memory of outer vector
+
+
     Node *left = build_kd_tree(left_sorted_lists, depth + 1);
     Node *right = build_kd_tree(right_sorted_lists, depth + 1);
     *result = (Node) {left, right, {median_point[0], median_point[1], median_point[2]}};
@@ -98,8 +107,41 @@ Node *KdTree::build_kd_tree(std::vector<std::vector<int>> sorted_lists, int dept
 }
 
 
+Bounding_box KdTree::get_bounding_box() const {
+    int max_idx = sorted_indices[0].size() - 1;
+    float min_x = points[sorted_indices[0][0]].coordinates[0];
+    float min_y = points[sorted_indices[1][0]].coordinates[1];
+    float min_z = points[sorted_indices[2][0]].coordinates[2];
+    float max_x = points[sorted_indices[0][max_idx]].coordinates[0];
+    float max_y = points[sorted_indices[1][max_idx]].coordinates[1];
+    float max_z = points[sorted_indices[2][max_idx]].coordinates[2];
+    Bounding_box box;
+    box.origin = QVector4D(min_x, min_y, min_z, 1);
+    box.dx = max_x - min_x;
+    box.dy = max_y - min_y;
+    box.dz = max_z - min_z;
+    box.center = box.origin + QVector4D(box.dx/2, box.dy/2, box.dz/2, 0);
+    return box;
+}
 
 
-//Für Abgabe 3:
+void KdTree::draw(const RenderCamera& renderer, const QColor& cl, float fl) const {
+    Bounding_box box = get_bounding_box();
+    Hexahedron hexhe = Hexahedron(box.origin, box.dx, box.dy, box.dz);
+    hexhe.draw(renderer, cl, fl);
+    for (int i = 0; i < points.size(); i++) {
+        QVector3D point = QVector3D(points[i].coordinates[0],
+                                    points[i].coordinates[1],
+                                    points[i].coordinates[2]);
+        renderer.renderPoint(point, QColorConstants::Blue, 4.0);
+    }
+    renderer.renderPoint(box.origin, QColorConstants::Red, 8.0);
+
+}
+
+void KdTree::affineMap(const QMatrix4x4& M)
+{
+
+}
 
 
