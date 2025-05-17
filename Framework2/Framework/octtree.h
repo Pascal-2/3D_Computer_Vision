@@ -18,7 +18,6 @@ public:
     virtual ~Octtree() override {};
     virtual void affineMap(const QMatrix4x4  & matrix) override;
     Octtree& operator=(const Octtree& kdt);
-    void print_tree(Cube_node* node);
     virtual void draw(const RenderCamera& renderer, const QColor&, float) const override;
 
 private:

@@ -40,12 +40,14 @@ GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent), pointSize(5)
     //sceneManager.push_back(new Plane(E0+4*E3,-E3));       // some plane
     PointCloud p = PointCloud();
     p.loadPLY("../../../data/bunny.ply");
+    /*
     std::vector<Point> tmp;
     for (int i = 0; i < p.length(); i++) {
         tmp.push_back((Point) {{p[i][0], p[i][1], p[i][2]}, i});
     }
     KdTree *beech = new KdTree(tmp); //print ist im Konstruktor
     sceneManager.push_back(beech);
+    */
 
 
     std::vector<std::array<double, 3>> bunny_points;
@@ -53,9 +55,8 @@ GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent), pointSize(5)
         bunny_points.push_back({p[i][0], p[i][1], p[i][2] - 2}); //bunnies nebeneinander
     }
     Octtree *kraken = new Octtree(bunny_points);
-    /*
     sceneManager.push_back(kraken);
-    */
+
 
 
 }
