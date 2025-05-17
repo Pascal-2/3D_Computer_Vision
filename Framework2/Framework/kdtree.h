@@ -1,6 +1,6 @@
 #ifndef KDTREE_H
 #define KDTREE_H
-#include "PointCloud.h"
+
 #include "SceneObject.h"
 
 typedef struct {

@@ -40,6 +40,9 @@ void SceneManager::draw(const RenderCamera& renderer, const QColor& color) const
         case ST_KdTree:
             obj->draw(renderer,color,1.0f);
             break;
+        case ST_Octtree:
+            obj->draw(renderer,color,1.0f);
+            break;
         }
     }
 }

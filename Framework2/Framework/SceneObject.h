@@ -29,7 +29,8 @@ enum class SceneObjectType {ST_NONE                     [[maybe_unused]],   //
                             ST_STEREO_CAMERA            [[maybe_unused]],   // stereo cameras
                             ST_POINT_CLOUD              [[maybe_unused]],   // point cloud
                             ST_MaxSceneType             [[maybe_unused]],
-                            ST_KdTree                   [[maybe_unused]]};
+                            ST_KdTree                   [[maybe_unused]],
+                            ST_Octtree                  [[maybe_unused]]};
 
 class SceneObject
 {

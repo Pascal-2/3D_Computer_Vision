@@ -19,6 +19,7 @@
 #include "PointCloud.h"
 //#include "Cube.h"
 #include "kdtree.h"
+#include "octtree.h"
 
 
 using namespace std;
@@ -45,6 +46,17 @@ GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent), pointSize(5)
     }
     KdTree *beech = new KdTree(tmp); //print ist im Konstruktor
     sceneManager.push_back(beech);
+
+
+    std::vector<std::array<double, 3>> bunny_points;
+    for (int i = 0; i < p.length(); i++) {
+        bunny_points.push_back({p[i][0], p[i][1], p[i][2] - 2}); //bunnies nebeneinander
+    }
+    Octtree *kraken = new Octtree(bunny_points);
+    /*
+    sceneManager.push_back(kraken);
+    */
+
 
 }
 

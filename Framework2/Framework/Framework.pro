@@ -32,7 +32,8 @@ HEADERS += ./glwidget.h \
     RenderCamera.h \
     SceneManager.h \
     SceneObject.h \
-    kdtree.h
+    kdtree.h \
+    octtree.h
 
 SOURCES += ./glwidget.cpp \
      ./mainwindow.cpp \
@@ -47,6 +48,7 @@ SOURCES += ./glwidget.cpp \
     RenderCamera.cpp \
     SceneManager.cpp \
     SceneObject.cpp \
-    kdtree.cpp
+    kdtree.cpp \
+    octtree.cpp
 
 FORMS += ./mainwindow.ui
