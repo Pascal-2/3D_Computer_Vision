@@ -7,10 +7,10 @@
 
 
 void Octtree::draw_splits(Cube_node* node, int depth, const RenderCamera& renderer) const {
-    if (depth >= 4) {
+    if (depth >= 5) {
         return;
     }
-    double current_length = node->length * 1;
+    double current_length = node->length;
     QVector3D vol_center = QVector3D(node->origin[0] + current_length,
                             node->origin[1] + current_length,
                             node->origin[2] + current_length);
@@ -106,7 +106,7 @@ Cube_node *Octtree::build_octtree(std::vector<std::array<double, 3>> param_point
             node->origin[i] = origin[i];
         }
         node->length = seitenlaengen / 2;
-        return node;
+        return NULL;
     }
     std::array<std::vector<std::array<double,3>>,8> cube_points;
     for (size_t i = 0; i < param_points.size(); i++) {
@@ -137,6 +137,10 @@ Cube_node *Octtree::build_octtree(std::vector<std::array<double, 3>> param_point
     double new_origin[3];
     Cube_node *result = new Cube_node;
     result->points = param_points;
+    result->length = seitenlaengen;
+    result->origin[0] = origin[0];
+    result->origin[1] = origin[1];
+    result->origin[2] = origin[2];
     for (size_t i = 0; i < 8; i++) {
         new_origin[0] = origin[0] + bin[i][0] * seitenlaengen;
         new_origin[1] = origin[1] + bin[i][1] * seitenlaengen;
